@@ -2178,6 +2178,13 @@ config MSM_STANDALONE_POWER_COLLAPSE
        bool "Enable standalone power collapse"
        default n
 
+config FORCE_FAST_CHARGE
+	bool "Force AC charge mode at will"
+  	default y
+  	help
+    	  A simple sysfs interface to force adapters that
+    	  are detected as USB to charge as AC.
+
 config MSM_GSBI9_UART
 	bool "Enable GSBI9 UART device"
 	default n
