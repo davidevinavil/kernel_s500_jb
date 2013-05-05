@@ -1521,11 +1521,6 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 	if (cpu_online(policy->cpu) && cpufreq_driver->target)
 		retval = cpufreq_driver->target(policy, target_freq, relation);
 
-#ifdef CONFIG_ARCH_ACER_MSM8960
-	if (cpu_online(policy->cpu) && cpufreq_driver->get)
-		policy->cur = cpufreq_driver->get(policy->cpu);
-#endif
-
 	return retval;
 }
 EXPORT_SYMBOL_GPL(__cpufreq_driver_target);
@@ -1756,6 +1751,8 @@ static int __cpufreq_set_policy(struct cpufreq_policy *data,
 
 	pr_debug("new min and max freqs are %u - %u kHz\n",
 					data->min, data->max);
+	pr_info("new min and max freqs are %u - %u kHz\n",
+					data->min, data->max);
 
 	if (cpufreq_driver->setpolicy) {
 		data->policy = policy->policy;
@@ -1884,6 +1881,9 @@ static struct notifier_block __refdata cpufreq_cpu_notifier = {
     .notifier_call = cpufreq_cpu_callback,
 };
 
+#if defined(CONFIG_CPU_UNDERVOLTING)
+void create_standard_UV_interfaces(void);
+#endif
 /*********************************************************************
  *               REGISTER / UNREGISTER CPUFREQ DRIVER                *
  *********************************************************************/
@@ -1948,7 +1948,9 @@ int cpufreq_register_driver(struct cpufreq_driver *driver_data)
 
 	register_hotcpu_notifier(&cpufreq_cpu_notifier);
 	pr_debug("driver %s up and running\n", driver_data->name);
-
+#if defined(CONFIG_CPU_UNDERVOLTING)
+	create_standard_UV_interfaces();
+#endif
 	return 0;
 err_if_unreg:
 	subsys_interface_unregister(&cpufreq_interface);

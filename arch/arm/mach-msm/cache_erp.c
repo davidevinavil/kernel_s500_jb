@@ -124,10 +124,6 @@ static struct proc_dir_entry *procfs_entry;
 static struct proc_dir_entry *procfs_log_entry;
 #endif
 
-#if defined(CONFIG_ARCH_ACER_MSM8960)
-void acer_set_cpu_freq_table(int type);
-#endif
-
 static inline unsigned int read_cesr(void)
 {
 	unsigned int cesr;
@@ -334,13 +330,8 @@ static irqreturn_t msm_l1_erp_irq(int irq, void *dev_id)
 	/* Clear the interrupt bits we processed */
 	write_cesr(cesr);
 
-#if defined(CONFIG_ARCH_ACER_MSM8960)
-	if (print_regs)
-		acer_set_cpu_freq_table(1);
-#else
 	if (print_regs)
 		ERP_L1_ERR("L1 cache error detected");
-#endif
 
 	return IRQ_HANDLED;
 }

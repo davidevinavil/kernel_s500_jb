@@ -54,10 +54,6 @@ static DEFINE_SPINLOCK(l2_lock);
 
 static struct drv_data {
 	struct acpu_level *acpu_freq_tbl;
-#if defined(CONFIG_ARCH_ACER_MSM8960)
-	struct acpu_level *acpu_freq_slow_tbl;
-	u32 acpu_freq_slow_tbl_size;
-#endif
 	const struct l2_level *l2_freq_tbl;
 	struct scalable *scalable;
 	struct hfpll_data *hfpll_data;
@@ -66,6 +62,8 @@ static struct drv_data {
 	int boost_uv;
 	struct device *dev;
 } drv;
+
+struct acpu_level *acpu_freq_tbl;
 
 static unsigned long acpuclk_krait_get_rate(int cpu)
 {
@@ -925,9 +923,9 @@ static const int krait_needs_vmin(void)
 
 static void krait_apply_vmin(struct acpu_level *tbl)
 {
-	for (; tbl->speed.khz != 0; tbl++)
-		if (tbl->vdd_core < 1150000)
-			tbl->vdd_core = 1150000;
+//	for (; tbl->speed.khz != 0; tbl++)
+//		if (tbl->vdd_core < 1150000)
+//			tbl->vdd_core = 1150000;
 }
 
 static int __init select_freq_plan(u32 qfprom_phys)
@@ -978,23 +976,6 @@ static int __init select_freq_plan(u32 qfprom_phys)
 	return tbl_idx;
 }
 
-#if defined(CONFIG_ARCH_ACER_MSM8960)
-//
-// type 1:  slow
-// type othres:  keep original
-//
-void acer_set_cpu_freq_table(int type)
-{
-	if (type == 1) {
-		if (drv.acpu_freq_tbl)
-			memcpy(drv.acpu_freq_tbl, drv.acpu_freq_slow_tbl, drv.acpu_freq_slow_tbl_size);
-		if (krait_needs_vmin())
-			krait_apply_vmin(drv.acpu_freq_tbl);
-	}
-}
-EXPORT_SYMBOL(acer_set_cpu_freq_table);
-#endif
-
 static void __init drv_data_init(struct device *dev,
 				 const struct acpuclk_krait_params *params)
 {
@@ -1025,16 +1006,10 @@ static void __init drv_data_init(struct device *dev,
 	drv.acpu_freq_tbl = kmemdup(params->pvs_tables[tbl_idx].table,
 				    params->pvs_tables[tbl_idx].size,
 				    GFP_KERNEL);
+	acpu_freq_tbl = drv.acpu_freq_tbl;
 	BUG_ON(!drv.acpu_freq_tbl);
 	drv.boost_uv = params->pvs_tables[tbl_idx].boost_uv;
 
-#if defined(CONFIG_ARCH_ACER_MSM8960)
-	drv.acpu_freq_slow_tbl = kmemdup(params->pvs_tables[PVS_SLOW].table,
-				    params->pvs_tables[PVS_SLOW].size,
-				    GFP_KERNEL);
-	drv.acpu_freq_slow_tbl_size = params->pvs_tables[PVS_SLOW].size;
-	BUG_ON(!drv.acpu_freq_slow_tbl);
-#endif
 	acpuclk_krait_data.power_collapse_khz = params->stby_khz;
 	acpuclk_krait_data.wait_for_irq_khz = params->stby_khz;
 }
